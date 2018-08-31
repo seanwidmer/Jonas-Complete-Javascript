@@ -23,13 +23,15 @@ var budgetController = (function() {
 
   var data = {
     allItems: {
-      exp: [],
-      inc: []
+      expense: [],
+      income: []
     },
     totals: {
-      exp: 0,
-      inc: 0
-    }
+      expense: 0,
+      income: 0
+    },
+    budget: 0,
+    percentage: -1
   };
 
   // Return an object that contains all of our public methods
@@ -45,9 +47,9 @@ var budgetController = (function() {
       }
 
       // Create new item based on type
-      if (type === 'exp') {
+      if (type === 'expense') {
         newItem = new Expense(id, description, value);
-      } else if (type === 'inc') {
+      } else if (type === 'income') {
         newItem = new Income(id, description, value);
       }
 
@@ -62,12 +64,25 @@ var budgetController = (function() {
 
     calculateBudget: function() {
       // Calculate total income and expenses
-      calculateBudget('exp');
-      calculateBudget('inc');
+      calculateTotal('expense');
+      calculateTotal('income');
 
       // Calculate budget: income - expenses
+      data.budget = data.totals.income - data.totals.expense;
 
       // Calculate percentage of income that we spent
+      data.percentage = Math.round(
+        (data.totals.expense / data.totals.income) * 100
+      );
+    },
+
+    getBudget: function() {
+      return {
+        budget: data.budget,
+        totalIncome: data.totals.income,
+        totalExpenses: data.totals.expense,
+        percentage: data.percentage
+      };
     },
 
     testing: function() {
@@ -90,7 +105,7 @@ var UIController = (function() {
   return {
     getinput: function() {
       return {
-        type: document.querySelector(DOMstrings.inputType).value, // Will be either "inc" or "exp"
+        type: document.querySelector(DOMstrings.inputType).value, // Will be either "income" or "expense"
         description: document.querySelector(DOMstrings.inputDescription).value,
         value: parseFloat(document.querySelector(DOMstrings.inputValue).value)
       };
@@ -102,12 +117,12 @@ var UIController = (function() {
       var element;
 
       // Create HTML string with placeholder text
-      if (type === 'inc') {
+      if (type === 'income') {
         element = DOMstrings.incomeContainer;
 
         html =
           '<div class="item clearfix" id="income-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
-      } else if (type === 'exp') {
+      } else if (type === 'expense') {
         element = DOMstrings.expensesContainer;
 
         html =
@@ -163,8 +178,13 @@ var controller = (function(budgetCtrl, UICtrl) {
 
   var updateBudget = function() {
     // 1. Calculate the budget
+    budgetCtrl.calculateBudget();
+
     // 2. Return the budget
+    var budget = budgetCtrl.getBudget();
+
     // 3. Display the budget on the user interface
+    console.log(budget);
   };
 
   var ctrlAddItem = function() {
